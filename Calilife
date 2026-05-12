@@ -9,7 +9,7 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 
   <script>
     tailwind.config = {
@@ -23,9 +23,10 @@
           colors: {
             primary: '#ff5722',
             primaryHover: '#e64a19',
-            darkBg: '#050505',
-            cardDark: 'rgba(25, 25, 25, 0.7)',
-            cardLight: 'rgba(255, 255, 255, 0.7)',
+            primaryLight: '#ff8a65',
+            darkBg: '#030303',
+            cardDark: 'rgba(18, 18, 18, 0.8)',
+            cardLight: 'rgba(255, 255, 255, 0.75)',
           }
         }
       }
@@ -33,296 +34,612 @@
   </script>
 
   <style>
-    /* Custom Properties & Smooth Scroll */
-    html {
-      scroll-behavior: smooth;
-    }
+    html { scroll-behavior: smooth; }
 
     :root {
       --bg-body: #f8fafc;
       --text-main: #0f172a;
-      --border-color: #e2e8f0;
-      --card-bg: var(--cardLight);
+      --border-color: rgba(226,232,240,0.6);
+      --card-bg: rgba(255,255,255,0.75);
+      --glow: rgba(255,87,34,0.15);
     }
-
     .dark {
-      --bg-body: #050505;
+      --bg-body: #030303;
       --text-main: #f8fafc;
-      --border-color: #1e293b;
-      --card-bg: var(--cardDark);
+      --border-color: rgba(255,255,255,0.06);
+      --card-bg: rgba(18,18,18,0.8);
+      --glow: rgba(255,87,34,0.08);
     }
 
     body {
       background-color: var(--bg-body);
       color: var(--text-main);
-      transition: background-color 0.4s ease, color 0.4s ease;
+      transition: background-color 0.5s ease, color 0.5s ease;
       overflow-x: hidden;
     }
 
-    /* Premium Ambient Glows */
-    .glow-orb { position: fixed; border-radius: 50%; filter: blur(100px); z-index: -1; opacity: 0.4; pointer-events: none; }
-    .glow-orb.orb-1 { width: 500px; height: 500px; background: #ff5722; top: -150px; left: -100px; }
-    .glow-orb.orb-2 { width: 400px; height: 400px; background: #8b5cf6; bottom: -100px; right: -50px; }
+    /* ===== PRELOADER ===== */
+    #preloader {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #030303;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    #preloader.done { opacity: 0; visibility: hidden; pointer-events: none; }
+    .loader-ring {
+      width: 60px; height: 60px; border-radius: 50%;
+      border: 3px solid rgba(255,87,34,0.1);
+      border-top-color: #ff5722;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: var(--bg-body); }
-    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+    /* ===== SCROLL PROGRESS ===== */
+    #scrollProgress {
+      position: fixed; top: 0; left: 0; height: 3px; z-index: 9998;
+      background: linear-gradient(90deg, #ff5722, #ff8a65, #ff5722);
+      background-size: 200% 100%;
+      animation: gradientShift 3s ease infinite;
+      transition: width 0.1s linear;
+    }
+    @keyframes gradientShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
 
-    /* Animations */
-    .fade-in-up { opacity: 0; transform: translateY(40px); transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    /* ===== CUSTOM CURSOR ===== */
+    .cursor-dot {
+      position: fixed; width: 8px; height: 8px; background: #ff5722;
+      border-radius: 50%; pointer-events: none; z-index: 9997;
+      transition: transform 0.15s ease; mix-blend-mode: difference;
+    }
+    .cursor-ring {
+      position: fixed; width: 40px; height: 40px; border: 2px solid rgba(255,87,34,0.4);
+      border-radius: 50%; pointer-events: none; z-index: 9996;
+      transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease, border-color 0.3s ease;
+    }
+    .cursor-ring.hover { width: 60px; height: 60px; border-color: rgba(255,87,34,0.8); }
+    @media (max-width: 768px) { .cursor-dot, .cursor-ring { display: none; } }
+
+    /* ===== AMBIENT GLOWS ===== */
+    .glow-orb {
+      position: fixed; border-radius: 50%; filter: blur(120px); z-index: -1;
+      opacity: 0.3; pointer-events: none;
+      animation: orbFloat 20s ease-in-out infinite;
+    }
+    .glow-orb.orb-1 { width: 600px; height: 600px; background: #ff5722; top: -200px; left: -150px; }
+    .glow-orb.orb-2 { width: 500px; height: 500px; background: #8b5cf6; bottom: -150px; right: -100px; animation-delay: -7s; }
+    .glow-orb.orb-3 { width: 400px; height: 400px; background: #ff5722; top: 50%; left: 50%; transform: translate(-50%,-50%); animation-delay: -14s; opacity: 0.1; }
+    @keyframes orbFloat {
+      0%,100% { transform: translate(0,0) scale(1); }
+      25% { transform: translate(30px,-40px) scale(1.05); }
+      50% { transform: translate(-20px,30px) scale(0.95); }
+      75% { transform: translate(40px,20px) scale(1.02); }
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ff5722; }
+
+    /* ===== ANIMATIONS ===== */
+    .fade-in-up {
+      opacity: 0; transform: translateY(50px);
+      transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1);
+    }
     .fade-in-up.visible { opacity: 1; transform: translateY(0); }
+    .stagger-1 { transition-delay: 0.1s; }
+    .stagger-2 { transition-delay: 0.2s; }
+    .stagger-3 { transition-delay: 0.3s; }
+    .stagger-4 { transition-delay: 0.4s; }
+    .stagger-5 { transition-delay: 0.5s; }
 
-    /* Glass Cards */
-    .glass-card { background: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease; }
-    .glass-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px -10px rgba(255, 87, 34, 0.3); }
+    .scale-in {
+      opacity: 0; transform: scale(0.9);
+      transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+    }
+    .scale-in.visible { opacity: 1; transform: scale(1); }
 
-    /* Skeleton Loader */
-    .skeleton { background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
-    .dark .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; }
-    @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    /* Hero text reveal */
+    .text-reveal { overflow: hidden; }
+    .text-reveal span {
+      display: inline-block;
+      transform: translateY(110%);
+      transition: transform 1s cubic-bezier(0.16,1,0.3,1);
+    }
+    .text-reveal.visible span { transform: translateY(0); }
 
-    /* Cart Sidebar Styles */
-    .cart-sidebar { position: fixed; top: 0; bottom: 0; z-index: 100; width: 100%; max-width: 24rem; background: var(--bg-body); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    /* ===== GLASS CARDS ===== */
+    .glass-card {
+      background: var(--card-bg);
+      -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s ease, border-color 0.4s ease;
+    }
+    .glass-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 60px -15px rgba(255,87,34,0.25);
+      border-color: rgba(255,87,34,0.3);
+    }
+
+    /* ===== 3D TILT CARD ===== */
+    .tilt-card {
+      transform-style: preserve-3d; perspective: 1000px;
+      transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+    .tilt-card .tilt-inner {
+      transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+    .tilt-card:hover .tilt-inner { transform: translateZ(20px); }
+
+    /* ===== ANIMATED BORDER CARD ===== */
+    .border-glow {
+      position: relative; overflow: hidden;
+    }
+    .border-glow::before {
+      content: ''; position: absolute; inset: -2px;
+      background: conic-gradient(from 0deg, transparent, #ff5722, transparent, transparent);
+      border-radius: inherit; z-index: -1;
+      animation: borderRotate 4s linear infinite;
+      opacity: 0; transition: opacity 0.4s ease;
+    }
+    .border-glow:hover::before { opacity: 1; }
+    .border-glow::after {
+      content: ''; position: absolute; inset: 1px;
+      background: var(--card-bg); border-radius: inherit; z-index: -1;
+    }
+    @keyframes borderRotate { to { transform: rotate(360deg); } }
+
+    /* ===== SKELETON ===== */
+    .skeleton {
+      background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+      background-size: 200% 100%; animation: loading 1.5s infinite;
+    }
+    .dark .skeleton {
+      background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+      background-size: 200% 100%;
+    }
+    @keyframes loading { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ===== MAGNETIC BUTTON ===== */
+    .magnetic-btn {
+      position: relative; overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+    }
+    .magnetic-btn .btn-ripple {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transform: scale(0); animation: ripple 0.6s linear;
+      pointer-events: none;
+    }
+    @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+    /* ===== CART SIDEBAR ===== */
+    .cart-sidebar {
+      position: fixed; top: 0; bottom: 0; z-index: 100; width: 100%; max-width: 26rem;
+      background: var(--bg-body); transition: transform 0.5s cubic-bezier(0.16,1,0.3,1);
+    }
     [dir="ltr"] .cart-sidebar { right: 0; transform: translateX(100%); border-left: 1px solid var(--border-color); }
     [dir="rtl"] .cart-sidebar { left: 0; transform: translateX(-100%); border-right: 1px solid var(--border-color); }
     .cart-open[dir="ltr"] .cart-sidebar, .cart-open[dir="rtl"] .cart-sidebar { transform: translateX(0); }
 
-    /* Toast */
-    #toastContainer { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-    [dir="rtl"] #toastContainer { right: auto; left: 20px; }
-    .toast { min-width: 300px; padding: 16px; border-radius: 8px; background: #1e293b; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; align-items: center; justify-content: space-between; border-left: 4px solid var(--primary); }
-    [dir="rtl"] .toast { border-left: none; border-right: 4px solid var(--primary); transform: translateX(-120%); }
+    /* ===== TOAST ===== */
+    #toastContainer {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 12px; pointer-events: none;
+    }
+    [dir="rtl"] #toastContainer { right: auto; left: 24px; }
+    .toast {
+      min-width: 320px; padding: 18px 24px; border-radius: 16px;
+      background: rgba(18,18,18,0.95); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+      color: white; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      transform: translateX(120%);
+      transition: transform 0.5s cubic-bezier(0.16,1,0.3,1);
+      display: flex; align-items: center; justify-content: space-between;
+      border-left: 4px solid #ff5722; font-weight: 600;
+    }
+    [dir="rtl"] .toast { border-left: none; border-right: 4px solid #ff5722; transform: translateX(-120%); }
     .toast.show { transform: translateX(0); }
+
+    /* ===== PARTICLES CANVAS ===== */
+    #particleCanvas {
+      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    }
+
+    /* ===== MARQUEE ===== */
+    .marquee-track {
+      display: flex; gap: 4rem; animation: marquee 30s linear infinite;
+      width: max-content;
+    }
+    @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+    /* ===== GRADIENT TEXT ===== */
+    .gradient-text {
+      background: linear-gradient(135deg, #ff5722, #ff8a65, #ffab91, #ff5722);
+      background-size: 300% 300%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradientFlow 4s ease infinite;
+    }
+    @keyframes gradientFlow {
+      0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%}
+    }
+
+    /* ===== NOISE TEXTURE ===== */
+    .noise::before {
+      content: "";
+      position: fixed; inset: 0; z-index: 9999;
+      background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+      opacity: 0.05; pointer-events: none;
+    }
+
+    .product-badge {
+      background: linear-gradient(135deg, #ff5722, #ff8a65);
+      color: white; font-size: 10px; font-weight: 800; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 6px; letter-spacing: 1px;
+    }
+
+    .section-divider {
+      height: 1px; background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+    }
+
+    [dir="rtl"] .font-display { font-family: 'Tajawal', sans-serif; }
   </style>
 </head>
-<body class="antialiased">
+<body class="noise">
 
+  <!-- ===== PRELOADER ===== -->
+  <div id="preloader">
+    <div class="loader-ring"></div>
+  </div>
+
+  <!-- ===== SCROLL PROGRESS ===== -->
+  <div id="scrollProgress"></div>
+
+  <!-- ===== CURSOR ===== -->
+  <div class="cursor-dot"></div>
+  <div class="cursor-ring"></div>
+
+  <!-- ===== AMBIENT GLOWS ===== -->
   <div class="glow-orb orb-1"></div>
   <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
 
-  <nav class="fixed top-0 w-full z-50 backdrop-blur-xl bg-white/70 dark:bg-darkBg/70 border-b border-gray-200 dark:border-gray-800 transition-all duration-300" id="navbar">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-20">
-        <div class="flex-shrink-0 cursor-pointer flex items-center gap-2" onclick="window.scrollTo({top:0, behavior:'smooth'})">
-          <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center transform rotate-12">
-            <span class="text-white font-display text-xl -rotate-12">C</span>
-          </div>
-          <span class="font-display text-3xl tracking-wider text-gray-900 dark:text-white" data-i18n="brand">CALILIFE</span>
+  <!-- ===== NAVIGATION ===== -->
+  <nav id="navbar" class="fixed top-0 left-0 right-0 z-[90] transition-all duration-500 px-6 py-6">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3 group cursor-pointer">
+        <div class="w-10 h-10 bg-gradient-to-br from-primary to-primaryLight rounded-xl flex items-center justify-center transform rotate-12 group-hover:rotate-0 transition-transform duration-500 shadow-lg shadow-primary/20">
+          <span class="text-white font-display text-xl -rotate-12 group-hover:rotate-0 transition-transform duration-500">C</span>
         </div>
+        <span class="font-display text-3xl tracking-wider hidden sm:block" data-i18n="brand">CALILIFE</span>
+      </div>
 
-        <div class="hidden md:flex items-center gap-8">
-          <a href="#about" class="text-sm font-semibold hover:text-primary transition-colors" data-i18n="nav_about">About</a>
-          <a href="#skills" class="text-sm font-semibold hover:text-primary transition-colors" data-i18n="nav_skills">Skills</a>
-          <a href="#store" class="text-sm font-semibold hover:text-primary transition-colors" data-i18n="nav_store">Store</a>
-        </div>
+      <div class="hidden md:flex items-center gap-10 bg-white/5 dark:bg-white/5 backdrop-blur-xl px-8 py-3 rounded-2xl border border-white/10">
+        <a href="#about" class="text-sm font-bold hover:text-primary transition uppercase tracking-widest" data-i18n="nav_about">About</a>
+        <a href="#skills" class="text-sm font-bold hover:text-primary transition uppercase tracking-widest" data-i18n="nav_skills">Skills</a>
+        <a href="#store" class="text-sm font-bold hover:text-primary transition uppercase tracking-widest" data-i18n="nav_store">Store</a>
+        <a href="#testimonials" class="text-sm font-bold hover:text-primary transition uppercase tracking-widest" data-i18n="nav_testimonials">Reviews</a>
+      </div>
 
-        <div class="flex items-center gap-3">
-          <button id="cartToggleBtn" onclick="app.toggleCart()" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center relative">
-            <svg class="w-5 h-5 text-gray-800 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-            <span id="cartCount" class="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
-          </button>
-
-          <button id="langToggle" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center font-bold text-sm">ع</button>
-          
-          <button id="themeToggle" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition flex items-center justify-center">
-            <svg class="w-5 h-5 text-gray-800 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/></svg>
-          </button>
-
-          <div id="authArea" class="hidden md:flex items-center gap-3">
-            <button onclick="app.openAuthModal('login')" class="px-5 py-2 text-sm font-semibold rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition border border-gray-200 dark:border-gray-700" data-i18n="btn_login">Login</button>
-            <button onclick="app.openAuthModal('signup')" class="px-5 py-2 text-sm font-semibold bg-primary text-white rounded-lg hover:bg-primaryHover transition shadow-lg shadow-primary/30" data-i18n="btn_signup">Sign Up</button>
-          </div>
-          
-          <div id="userArea" class="hidden items-center gap-3">
-            <span id="userNameDisplay" class="text-sm font-bold text-primary"></span>
-            <button onclick="app.logout()" class="text-xs text-gray-500 hover:text-red-500 font-medium transition" data-i18n="btn_logout">Logout</button>
-          </div>
-
-          <button id="mobileMenuBtn" class="md:hidden p-2">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-          </button>
+      <div class="flex items-center gap-4">
+        <button id="langToggle" onclick="app.toggleLanguage()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-sm hover:bg-primary hover:text-white transition-all">ع</button>
+        <button id="themeToggle" onclick="app.toggleTheme()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+        <button onclick="app.toggleCart()" class="relative w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+          <span id="cartCount" class="absolute -top-2 -right-2 w-5 h-5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center hidden">0</span>
+        </button>
+        <div id="authContainer" class="flex items-center gap-3">
+          <!-- Auth buttons injected here -->
         </div>
       </div>
-    </div>
-    
-    <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-darkBg border-b border-gray-200 dark:border-gray-800 px-4 pt-2 pb-6 space-y-4 shadow-xl">
-      <a href="#about" class="block text-lg font-medium" data-i18n="nav_about">About</a>
-      <a href="#skills" class="block text-lg font-medium" data-i18n="nav_skills">Skills</a>
-      <a href="#store" class="block text-lg font-medium" data-i18n="nav_store">Store</a>
-      <div id="mobileAuthArea" class="pt-4 border-t border-gray-200 dark:border-gray-800 flex flex-col gap-2"></div>
     </div>
   </nav>
 
-  <div id="cartOverlay" class="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm hidden cursor-pointer transition-opacity" onclick="app.toggleCart()"></div>
-  <div id="cartSidebar" class="cart-sidebar flex flex-col shadow-2xl">
-    <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-      <h2 class="text-2xl font-display text-gray-900 dark:text-white" data-i18n="cart_title">Your Cart</h2>
-      <button onclick="app.toggleCart()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition text-gray-500 hover:text-gray-900 dark:hover:text-white">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+  <!-- ===== CART SIDEBAR ===== -->
+  <div id="cartOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden" onclick="app.toggleCart()"></div>
+  <aside class="cart-sidebar p-8 flex flex-col z-[101]">
+    <div class="flex items-center justify-between mb-10">
+      <h2 class="text-3xl font-display tracking-wide" data-i18n="cart_title">Your Cart</h2>
+      <button onclick="app.toggleCart()" class="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
     </div>
-    <div id="cartItems" class="flex-1 overflow-y-auto p-6 space-y-4">
-      </div>
-    <div class="p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0a0a0a]">
-      <div class="flex justify-between items-center mb-6 font-bold text-lg">
-        <span data-i18n="cart_total" class="text-gray-900 dark:text-white">Total</span>
-        <span id="cartTotal" class="text-primary text-2xl font-display">$0.00</span>
-      </div>
-      <button onclick="app.checkout()" class="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primaryHover transition shadow-lg shadow-primary/30" data-i18n="btn_checkout">Checkout</button>
+    <div id="cartItems" class="flex-1 overflow-y-auto space-y-6 pr-2">
+      <!-- Cart items injected here -->
     </div>
-  </div>
+    <div class="pt-8 border-t border-gray-200 dark:border-white/5 mt-auto">
+      <div class="flex items-center justify-between mb-6">
+        <span class="text-gray-500 font-bold uppercase tracking-widest text-sm" data-i18n="cart_total">Total</span>
+        <span id="cartTotal" class="text-3xl font-display text-primary">$0.00</span>
+      </div>
+      <button onclick="app.checkout()" class="magnetic-btn w-full py-5 bg-gradient-to-r from-primary to-primaryLight text-white font-bold rounded-2xl shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all text-lg" data-i18n="btn_checkout">Checkout</button>
+    </div>
+  </aside>
 
   <main>
-    <section class="relative min-h-screen flex items-center justify-center px-4 pt-20 text-center overflow-hidden">
-      <div class="max-w-5xl mx-auto space-y-8 z-10">
-        <div class="fade-in-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-100 dark:bg-orange-500/10 text-primary text-sm font-bold tracking-wider uppercase mb-2 border border-orange-200 dark:border-orange-500/20">
+    <!-- ===== HERO ===== -->
+    <section class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+      <canvas id="particleCanvas"></canvas>
+      <div class="max-w-7xl mx-auto px-6 relative z-10 text-center">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-widest uppercase border border-primary/20 mb-8 scale-in">
           <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
           <span data-i18n="hero_tag">Master Your Bodyweight</span>
         </div>
-        
-        <h1 class="fade-in-up font-display text-7xl md:text-8xl lg:text-9xl leading-[0.9] tracking-tight">
-          <span data-i18n="hero_title_1" class="text-gray-900 dark:text-white">UNLEASH YOUR</span><br>
-          <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400" data-i18n="hero_title_2">TRUE STRENGTH</span>
+        <h1 class="text-7xl md:text-[10rem] font-display leading-[0.85] tracking-tight mb-8">
+          <div class="text-reveal">
+            <span data-i18n="hero_title_1">UNLEASH YOUR</span>
+          </div>
+          <div class="text-reveal stagger-1">
+            <span class="gradient-text" data-i18n="hero_title_2">TRUE STRENGTH</span>
+          </div>
         </h1>
-        
-        <p class="fade-in-up text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-medium" data-i18n="hero_desc">
+        <p class="text-xl md:text-2xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed fade-in-up stagger-2" data-i18n="hero_desc">
           Calisthenics is the art of using your own bodyweight to build incredible strength, flexibility, and control. No gym required.
         </p>
-        
-        <div class="fade-in-up flex flex-col sm:flex-row gap-4 justify-center pt-4">
-          <a href="#skills" class="px-8 py-4 bg-primary text-white font-bold rounded-xl hover:bg-primaryHover hover:scale-105 transition-all shadow-xl shadow-primary/30" data-i18n="btn_start">Start Journey</a>
-          <a href="#about" class="px-8 py-4 glass-card font-bold rounded-xl hover:border-primary hover:text-primary transition-all text-gray-900 dark:text-white" data-i18n="btn_learn">Learn More</a>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-6 fade-in-up stagger-3">
+          <a href="#skills" class="magnetic-btn px-12 py-5 bg-gradient-to-r from-primary to-primaryLight text-white font-bold rounded-2xl hover:shadow-2xl hover:shadow-primary/40 transition-all text-lg group">
+            <span data-i18n="btn_start">Start Journey</span>
+          </a>
+          <a href="#about" class="magnetic-btn px-12 py-5 bg-white/5 dark:bg-white/5 backdrop-blur-xl border border-white/10 font-bold rounded-2xl hover:bg-white/10 transition-all text-lg" data-i18n="btn_learn">Learn More</a>
+        </div>
+      </div>
+
+      <!-- Marquee -->
+      <div class="absolute bottom-10 left-0 right-0 overflow-hidden py-10 opacity-20 pointer-events-none">
+        <div class="marquee-track">
+          <span class="text-6xl font-display tracking-widest">PULLUPS • PUSHUPS • DIPS • MUSCLEUPS • PLANCHE • FRONT LEVER • HANDSTAND • HUMAN FLAG • </span>
+          <span class="text-6xl font-display tracking-widest">PULLUPS • PUSHUPS • DIPS • MUSCLEUPS • PLANCHE • FRONT LEVER • HANDSTAND • HUMAN FLAG • </span>
         </div>
       </div>
     </section>
 
-    <section id="about" class="py-32 px-4 relative">
-      <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-        <div class="space-y-8 fade-in-up">
-          <h2 class="text-5xl md:text-6xl font-display tracking-wide" data-i18n="about_title">What is Calisthenics?</h2>
-          <div class="w-20 h-2 bg-primary rounded-full"></div>
-          <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed" data-i18n="about_text_1">
+    <!-- ===== ABOUT ===== -->
+    <section id="about" class="py-36 px-6 relative">
+      <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-24 items-center">
+        <div class="space-y-10 fade-in-up">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-widest uppercase border border-primary/20">
+            <span data-i18n="about_tag">The Art of Movement</span>
+          </div>
+          <h2 class="text-5xl md:text-7xl font-display tracking-wide leading-[0.95]" data-i18n="about_title">What is Calisthenics?</h2>
+          <div class="w-24 h-1.5 bg-gradient-to-r from-primary to-primaryLight rounded-full"></div>
+          <p class="text-lg text-gray-500 dark:text-gray-400 leading-relaxed" data-i18n="about_text_1">
             Calisthenics is a form of strength training using your own bodyweight as resistance. The word comes from the Greek words "kallos" (beauty) and "sthenos" (strength).
           </p>
-          <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed" data-i18n="about_text_2">
+          <p class="text-lg text-gray-500 dark:text-gray-400 leading-relaxed" data-i18n="about_text_2">
             Unlike traditional weightlifting, calisthenics focuses on compound movements that engage multiple muscle groups simultaneously, developing functional strength, coordination, and body control.
           </p>
         </div>
-        <div class="grid grid-cols-2 gap-6 fade-in-up">
-          <div class="glass-card p-8 rounded-3xl text-center">
-            <div class="text-5xl font-display text-primary mb-3">0</div>
-            <div class="text-sm font-bold uppercase tracking-widest text-gray-500" data-i18n="stat_1">Equipment</div>
+        <div class="grid grid-cols-2 gap-6 fade-in-up stagger-2">
+          <div class="glass-card border-glow p-10 rounded-3xl text-center tilt-card group">
+            <div class="tilt-inner">
+              <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+                <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+              </div>
+              <div class="text-5xl font-display text-primary mb-2 count-up" data-count="15">0</div>
+              <div class="text-xs font-bold uppercase tracking-[0.2em] text-gray-500" data-i18n="stat_1">Equipment</div>
+            </div>
           </div>
-          <div class="glass-card p-8 rounded-3xl text-center transform lg:translate-y-8">
-            <div class="text-5xl font-display text-primary mb-3">100%</div>
-            <div class="text-sm font-bold uppercase tracking-widest text-gray-500" data-i18n="stat_2">Bodyweight</div>
+          <div class="glass-card border-glow p-10 rounded-3xl text-center transform lg:translate-y-10 tilt-card group">
+            <div class="tilt-inner">
+              <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+                <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              </div>
+              <div class="text-5xl font-display text-primary mb-2">100%</div>
+              <div class="text-xs font-bold uppercase tracking-[0.2em] text-gray-500" data-i18n="stat_2">Bodyweight</div>
+            </div>
           </div>
-          <div class="glass-card p-8 rounded-3xl text-center">
-            <div class="text-5xl font-display text-primary mb-3">LIFE</div>
-            <div class="text-sm font-bold uppercase tracking-widest text-gray-500" data-i18n="stat_3">Journey</div>
+          <div class="glass-card border-glow p-10 rounded-3xl text-center tilt-card group">
+            <div class="tilt-inner">
+              <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+                <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+              </div>
+              <div class="text-5xl font-display text-primary mb-2">LIFE</div>
+              <div class="text-xs font-bold uppercase tracking-[0.2em] text-gray-500" data-i18n="stat_3">Journey</div>
+            </div>
           </div>
-          <div class="glass-card p-8 rounded-3xl text-center transform lg:translate-y-8">
-            <div class="text-5xl font-display text-primary mb-3">FREE</div>
-            <div class="text-sm font-bold uppercase tracking-widest text-gray-500" data-i18n="stat_4">To Start</div>
+          <div class="glass-card border-glow p-10 rounded-3xl text-center transform lg:translate-y-10 tilt-card group">
+            <div class="tilt-inner">
+              <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+                <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+              <div class="text-5xl font-display text-primary mb-2">FREE</div>
+              <div class="text-xs font-bold uppercase tracking-[0.2em] text-gray-500" data-i18n="stat_4">To Start</div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="skills" class="py-32 px-4 relative z-10">
+    <div class="section-divider max-w-7xl mx-auto"></div>
+
+    <!-- ===== SKILLS ===== -->
+    <section id="skills" class="py-36 px-6 relative z-10">
       <div class="max-w-7xl mx-auto">
-        <div class="text-center mb-16 fade-in-up">
-          <h2 class="text-5xl md:text-6xl font-display mb-4" data-i18n="skills_title">Skill Tutorials</h2>
-          <p class="text-lg text-gray-500" data-i18n="skills_subtitle">Progress from beginner to master</p>
-        </div>
-
-        <div class="flex justify-center flex-wrap gap-3 mb-16 fade-in-up" id="skillFilters">
-          <button class="filter-btn active px-6 py-2.5 rounded-full text-sm font-bold transition-all bg-primary text-white shadow-lg shadow-primary/30" data-filter="all" data-i18n="filter_all">All</button>
-          <button class="filter-btn px-6 py-2.5 rounded-full text-sm font-bold transition-all bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700" data-filter="beginner" data-i18n="filter_beginner">Beginner</button>
-          <button class="filter-btn px-6 py-2.5 rounded-full text-sm font-bold transition-all bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700" data-filter="intermediate" data-i18n="filter_intermediate">Intermediate</button>
-          <button class="filter-btn px-6 py-2.5 rounded-full text-sm font-bold transition-all bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700" data-filter="advanced" data-i18n="filter_advanced">Advanced</button>
-        </div>
-
-        <div id="skillsGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="text-center mb-20 fade-in-up">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-widest uppercase border border-primary/20 mb-6">
+            <span data-i18n="skills_tag">Progressive Training</span>
           </div>
+          <h2 class="text-5xl md:text-7xl font-display mb-4" data-i18n="skills_title">Skill Tutorials</h2>
+          <p class="text-lg text-gray-500 max-w-lg mx-auto" data-i18n="skills_subtitle">Progress from beginner to master</p>
+        </div>
+
+        <div class="flex justify-center flex-wrap gap-3 mb-20 fade-in-up" id="skillFilters">
+          <button class="filter-btn active px-7 py-3 rounded-full text-sm font-bold transition-all bg-gradient-to-r from-primary to-primaryLight text-white shadow-lg shadow-primary/30" data-filter="all" data-i18n="filter_all">All</button>
+          <button class="filter-btn px-7 py-3 rounded-full text-sm font-bold transition-all bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/5" data-filter="beginner" data-i18n="filter_beginner">Beginner</button>
+          <button class="filter-btn px-7 py-3 rounded-full text-sm font-bold transition-all bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/5" data-filter="intermediate" data-i18n="filter_intermediate">Intermediate</button>
+          <button class="filter-btn px-7 py-3 rounded-full text-sm font-bold transition-all bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/5" data-filter="advanced" data-i18n="filter_advanced">Advanced</button>
+        </div>
+
+        <div id="skillsGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
       </div>
     </section>
 
-    <section id="store" class="py-32 px-4 relative">
+    <div class="section-divider max-w-7xl mx-auto"></div>
+
+    <!-- ===== TESTIMONIALS ===== -->
+    <section id="testimonials" class="py-36 px-6 relative">
       <div class="max-w-7xl mx-auto">
-        <div class="text-center mb-16 fade-in-up">
-          <h2 class="text-5xl md:text-6xl font-display mb-4" data-i18n="store_title">Equipment Store</h2>
-          <p class="text-lg text-gray-500" data-i18n="store_subtitle">Gear up for your workout</p>
+        <div class="text-center mb-20 fade-in-up">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-widest uppercase border border-primary/20 mb-6">
+            <span data-i18n="testimonials_tag">Community</span>
+          </div>
+          <h2 class="text-5xl md:text-7xl font-display mb-4" data-i18n="testimonials_title">What Athletes Say</h2>
+        </div>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="glass-card testimonial-card p-10 rounded-3xl fade-in-up">
+            <div class="flex gap-1 mb-6">
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            </div>
+            <p class="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed text-lg" data-i18n="testimonial_1">"Calilife transformed my training. I went from zero pull-ups to muscle-ups in 6 months. The progressive approach makes all the difference."</p>
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primaryLight flex items-center justify-center text-white font-bold">A</div>
+              <div>
+                <div class="font-bold text-gray-900 dark:text-white">Alex Rivera</div>
+                <div class="text-sm text-gray-500" data-i18n="testimonial_role_1">Street Workout Athlete</div>
+              </div>
+            </div>
+          </div>
+          <div class="glass-card testimonial-card p-10 rounded-3xl fade-in-up stagger-2">
+            <div class="flex gap-1 mb-6">
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            </div>
+            <p class="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed text-lg" data-i18n="testimonial_2">"The best calisthenics platform I've found. The skill breakdowns are incredibly detailed and the community keeps me motivated every day."</p>
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center text-white font-bold">S</div>
+              <div>
+                <div class="font-bold text-gray-900 dark:text-white">Sarah Chen</div>
+                <div class="text-sm text-gray-500" data-i18n="testimonial_role_2">Fitness Coach</div>
+              </div>
+            </div>
+          </div>
+          <div class="glass-card testimonial-card p-10 rounded-3xl fade-in-up stagger-4">
+            <div class="flex gap-1 mb-6">
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            </div>
+            <p class="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed text-lg" data-i18n="testimonial_3">"From planche to front lever, Calilife's progressions are science-backed and effective. I've achieved skills I never thought possible."</p>
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-400 flex items-center justify-center text-white font-bold">M</div>
+              <div>
+                <div class="font-bold text-gray-900 dark:text-white">Marcus Johnson</div>
+                <div class="text-sm text-gray-500" data-i18n="testimonial_role_3">Calisthenics Champion</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider max-w-7xl mx-auto"></div>
+
+    <!-- ===== STORE ===== -->
+    <section id="store" class="py-36 px-6 relative">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-20 fade-in-up">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-widest uppercase border border-primary/20 mb-6">
+            <span data-i18n="store_tag">Premium Gear</span>
+          </div>
+          <h2 class="text-5xl md:text-7xl font-display mb-4" data-i18n="store_title">Equipment Store</h2>
+          <p class="text-lg text-gray-500 max-w-lg mx-auto" data-i18n="store_subtitle">Premium gear for real results</p>
         </div>
         
-        <div id="productsGrid" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-           </div>
+        <div id="productsGrid" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
       </div>
+    </section>
+
+    <!-- ===== CTA BANNER ===== -->
+    <section class="py-36 px-6 relative overflow-hidden">
+      <div class="max-w-5xl mx-auto text-center fade-in-up relative z-10">
+        <h2 class="text-5xl md:text-7xl font-display mb-6" data-i18n="cta_title">Ready to Transform?</h2>
+        <p class="text-xl text-gray-500 mb-10 max-w-2xl mx-auto" data-i18n="cta_desc">Join thousands of athletes who've already started their calisthenics journey with Calilife.</p>
+        <a href="#skills" class="magnetic-btn inline-flex items-center gap-3 px-12 py-5 bg-gradient-to-r from-primary to-primaryLight text-white font-bold rounded-2xl hover:shadow-2xl hover:shadow-primary/40 transition-all text-lg group">
+          <span data-i18n="btn_start">Start Journey</span>
+          <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+        </a>
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent pointer-events-none"></div>
     </section>
   </main>
 
-  <footer class="glass-card border-t border-gray-200 dark:border-gray-800 py-16 px-4 mt-20">
-    <div class="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
+  <!-- ===== FOOTER ===== -->
+  <footer class="border-t border-gray-200 dark:border-white/5 py-20 px-6 mt-10">
+    <div class="max-w-7xl mx-auto grid md:grid-cols-4 gap-16">
       <div class="col-span-1 md:col-span-2">
-        <span class="font-display text-3xl tracking-wider text-primary" data-i18n="brand">CALILIFE</span>
-        <p class="mt-6 text-gray-500 max-w-sm text-lg" data-i18n="footer_desc">Master your bodyweight. Build real strength. Join the movement.</p>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 bg-gradient-to-br from-primary to-primaryLight rounded-xl flex items-center justify-center transform rotate-12">
+            <span class="text-white font-display text-xl -rotate-12">C</span>
+          </div>
+          <span class="font-display text-3xl tracking-wider" data-i18n="brand">CALILIFE</span>
+        </div>
+        <p class="text-gray-500 max-w-sm text-lg leading-relaxed" data-i18n="footer_desc">Master your bodyweight. Build real strength. Join the movement.</p>
       </div>
       <div>
-        <h4 class="font-bold text-lg mb-6" data-i18n="footer_links">Links</h4>
-        <ul class="space-y-3 font-medium text-gray-500">
-          <li><a href="#about" class="hover:text-primary transition" data-i18n="nav_about">About</a></li>
-          <li><a href="#skills" class="hover:text-primary transition" data-i18n="nav_skills">Skills</a></li>
-          <li><a href="#store" class="hover:text-primary transition" data-i18n="nav_store">Store</a></li>
+        <h4 class="font-bold uppercase tracking-widest text-sm mb-8" data-i18n="footer_links">Links</h4>
+        <ul class="space-y-4 text-gray-500 font-medium">
+          <li><a href="#about" class="hover:text-primary transition">About</a></li>
+          <li><a href="#skills" class="hover:text-primary transition">Skills</a></li>
+          <li><a href="#store" class="hover:text-primary transition">Store</a></li>
+          <li><a href="#testimonials" class="hover:text-primary transition">Reviews</a></li>
         </ul>
       </div>
       <div>
-        <h4 class="font-bold text-lg mb-6" data-i18n="footer_contact">Contact</h4>
-        <ul class="space-y-3 font-medium text-gray-500">
-          <li>support@calilife.com</li>
-          <li>+1 234 567 890</li>
+        <h4 class="font-bold uppercase tracking-widest text-sm mb-8" data-i18n="footer_contact">Contact</h4>
+        <ul class="space-y-4 text-gray-500 font-medium">
+          <li>hello@calilife.com</li>
+          <li>+1 (555) 123-4567</li>
         </ul>
       </div>
     </div>
-    <div class="max-w-7xl mx-auto mt-16 pt-8 border-t border-gray-200 dark:border-gray-800 text-center font-medium text-gray-500">
-      &copy; 2026 Calilife. All rights reserved.
+    <div class="max-w-7xl mx-auto mt-20 pt-8 border-t border-gray-200 dark:border-white/5 text-center text-gray-500 text-sm font-medium">
+      &copy; 2026 CALILIFE. All rights reserved.
     </div>
   </footer>
 
-  <div id="authModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm cursor-pointer" onclick="app.closeAuthModal()"></div>
-    
-    <div class="glass-card w-full max-w-md p-8 rounded-3xl relative z-10 shadow-2xl transform scale-95 opacity-0 transition-all duration-300" id="authModalContent">
-      <button onclick="app.closeAuthModal()" class="absolute top-6 right-6 text-gray-400 hover:text-white bg-gray-800 rounded-full p-2 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+  <!-- ===== AUTH MODAL ===== -->
+  <div id="authModal" class="fixed inset-0 z-[200] flex items-center justify-center px-6 hidden">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="app.closeAuthModal()"></div>
+    <div class="glass-card w-full max-w-md p-10 rounded-[2.5rem] relative z-10 scale-in">
+      <button onclick="app.closeAuthModal()" class="absolute top-6 right-6 p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
-
-      <div class="text-center mb-8">
-        <h2 class="font-display text-4xl mb-2 text-gray-900 dark:text-white" id="modalTitle">LOGIN</h2>
-        <p class="text-gray-500 font-medium" id="modalSubtitle">Welcome back to the grind</p>
+      
+      <div class="text-center mb-10">
+        <h2 class="text-4xl font-display mb-2" id="authTitle" data-i18n="btn_login">Login</h2>
+        <p class="text-gray-500 font-medium" id="authSubtitle">Welcome back, athlete!</p>
       </div>
 
-      <form id="authForm" class="space-y-5">
+      <form id="authForm" onsubmit="app.handleAuth(event)" class="space-y-6">
         <div id="nameField" class="hidden">
-          <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-2" data-i18n="label_name">Name</label>
-          <input type="text" id="inputName" class="w-full px-5 py-4 rounded-xl bg-gray-100 dark:bg-gray-800 border border-transparent focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-gray-900 dark:text-white">
+          <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-2" data-i18n="label_name">Full Name</label>
+          <input type="text" id="inputName" class="w-full px-5 py-4 rounded-xl bg-gray-100 dark:bg-white/5 border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-gray-900 dark:text-white" placeholder="John Doe">
         </div>
         <div>
           <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-2" data-i18n="label_email">Email</label>
-          <input type="email" id="inputEmail" class="w-full px-5 py-4 rounded-xl bg-gray-100 dark:bg-gray-800 border border-transparent focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-gray-900 dark:text-white" required>
+          <input type="email" id="inputEmail" class="w-full px-5 py-4 rounded-xl bg-gray-100 dark:bg-white/5 border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-gray-900 dark:text-white" placeholder="you@example.com" required>
         </div>
         <div>
           <label class="block text-sm font-bold text-gray-600 dark:text-gray-400 mb-2" data-i18n="label_password">Password</label>
-          <input type="password" id="inputPassword" class="w-full px-5 py-4 rounded-xl bg-gray-100 dark:bg-gray-800 border border-transparent focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-gray-900 dark:text-white" required minlength="6">
+          <input type="password" id="inputPassword" class="w-full px-5 py-4 rounded-xl bg-gray-100 dark:bg-white/5 border border-transparent focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-gray-900 dark:text-white" placeholder="••••••••" required minlength="6">
         </div>
         
-        <button type="submit" id="authSubmitBtn" class="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primaryHover transition-transform transform active:scale-95 shadow-lg shadow-primary/30 mt-6 text-lg relative overflow-hidden group">
+        <button type="submit" id="authSubmitBtn" class="magnetic-btn w-full py-4 bg-gradient-to-r from-primary to-primaryLight text-white font-bold rounded-xl hover:shadow-xl hover:shadow-primary/30 transition-all text-lg relative overflow-hidden group">
           <span class="relative z-10" id="btnAuthText" data-i18n="btn_login">Login</span>
         </button>
       </form>
 
-      <div class="mt-8 text-center text-sm font-medium">
+      <div class="mt-10 text-center text-sm font-medium">
         <span class="text-gray-500" id="modalSwitchText">Don't have an account?</span>
         <button type="button" id="modalSwitchBtn" class="text-primary hover:text-primaryHover transition ml-2 font-bold" onclick="app.switchAuthMode()">Sign Up</button>
       </div>
@@ -332,35 +649,123 @@
   <div id="toastContainer"></div>
 
   <script>
-    // --- Data Store ---
+    // ===== DATA =====
     const Dictionary = {
       en: {
-        brand: "CALILIFE", nav_about: "About", nav_skills: "Skills", nav_store: "Store", btn_login: "Login", btn_signup: "Sign Up", btn_logout: "Logout", btn_start: "Start Journey", btn_learn: "Learn More", hero_tag: "Master Your Bodyweight", hero_title_1: "UNLEASH YOUR", hero_title_2: "TRUE STRENGTH", hero_desc: "Calisthenics is the art of using your own bodyweight to build incredible strength, flexibility, and control. No gym required.", about_title: "What is Calisthenics?", about_text_1: "Calisthenics is a form of strength training using your own bodyweight as resistance. The word comes from the Greek words 'kallos' (beauty) and 'sthenos' (strength).", about_text_2: "Unlike traditional weightlifting, calisthenics focuses on compound movements that engage multiple muscle groups simultaneously.", stat_1: "Equipment", stat_2: "Bodyweight", stat_3: "Journey", stat_4: "To Start", skills_title: "Skill Tutorials", skills_subtitle: "Progress from beginner to master", filter_all: "All", filter_beginner: "Beginner", filter_intermediate: "Intermediate", filter_advanced: "Advanced", store_title: "Equipment Store", store_subtitle: "Premium gear for real results", footer_desc: "Master your bodyweight. Build real strength. Join the movement.", footer_links: "Links", footer_contact: "Contact", label_name: "Full Name", label_email: "Email Address", label_password: "Password", level: "Level", add_cart: "Add to Cart", difficulty: "Difficulty", cart_title: "Your Cart", cart_empty: "Your cart is empty.", cart_total: "Total", btn_checkout: "Checkout"
+        brand:"CALILIFE",nav_about:"About",nav_skills:"Skills",nav_store:"Store",nav_testimonials:"Reviews",btn_login:"Login",btn_signup:"Sign Up",btn_logout:"Logout",btn_start:"Start Journey",btn_learn:"Learn More",hero_tag:"Master Your Bodyweight",hero_title_1:"UNLEASH YOUR",hero_title_2:"TRUE STRENGTH",hero_desc:"Calisthenics is the art of using your own bodyweight to build incredible strength, flexibility, and control. No gym required.",about_tag:"The Art of Movement",about_title:"What is Calisthenics?",about_text_1:"Calisthenics is a form of strength training using your own bodyweight as resistance. The word comes from the Greek words 'kallos' (beauty) and 'sthenos' (strength).",about_text_2:"Unlike traditional weightlifting, calisthenics focuses on compound movements that engage multiple muscle groups simultaneously.",stat_1:"Equipment",stat_2:"Bodyweight",stat_3:"Journey",stat_4:"To Start",stat_skills:"Skills",stat_programs:"Programs",stat_k:"K+ Users",skills_tag:"Progressive Training",skills_title:"Skill Tutorials",skills_subtitle:"Progress from beginner to master",filter_all:"All",filter_beginner:"Beginner",filter_intermediate:"Intermediate",filter_advanced:"Advanced",store_tag:"Premium Gear",store_title:"Equipment Store",store_subtitle:"Premium gear for real results",testimonials_tag:"Community",testimonials_title:"What Athletes Say",testimonial_1:'"Calilife transformed my training. I went from zero pull-ups to muscle-ups in 6 months. The progressive approach makes all the difference."',testimonial_2:'"The best calisthenics platform I\'ve found. The skill breakdowns are incredibly detailed and the community keeps me motivated."',testimonial_3:'"From planche to front lever, Calilife\'s progressions are science-backed and effective. I\'ve achieved skills I never thought possible."',testimonial_role_1:"Street Workout Athlete",testimonial_role_2:"Fitness Coach",testimonial_role_3:"Calisthenics Champion",cta_title:"Ready to Transform?",cta_desc:"Join thousands of athletes who've already started their calisthenics journey with Calilife.",footer_desc:"Master your bodyweight. Build real strength. Join the movement.",footer_links:"Links",footer_contact:"Contact",label_name:"Full Name",label_email:"Email Address",label_password:"Password",level:"Level",add_cart:"Add to Cart",difficulty:"Difficulty",cart_title:"Your Cart",cart_empty:"Your cart is empty.",cart_total:"Total",btn_checkout:"Checkout",
+        static_skills: "Static Skills", dynamic_skills: "Dynamic Skills"
       },
       ar: {
-        brand: "كاليلاييف", nav_about: "عن الرياضة", nav_skills: "المهارات", nav_store: "المتجر", btn_login: "دخول", btn_signup: "تسجيل حساب", btn_logout: "خروج", btn_start: "ابدأ الرحلة", btn_learn: "اعرف المزيد", hero_tag: "أتقن وزن جسمك", hero_title_1: "أطلق العنان لـ", hero_title_2: "قوتك الحقيقية", hero_desc: "كاليستينكس هي فن استخدام وزن جسمك لبناء قوة لا تصدق ومرونة وتحكم. لا تحتاج إلى صالة ألعاب رياضية.", about_title: "ما هي الكاليستينكس؟", about_text_1: "كاليستينكس هي شكل من أشكال تدريب القوة باستخدام وزن الجسم كمقاومة. الكلمة مشتقة من الكلمتين اليونانيتين 'kallos' (الجمال) و 'sthenos' (القوة).", about_text_2: "على عكس رفع الأثقال التقليدي، تركز كاليستينكس على الحركات المركبة التي تشرك مجموعات عضلية متعددة في وقت واحد.", stat_1: "معدات", stat_2: "وزن الجسم", stat_3: "رحلة", stat_4: "للبدء", skills_title: "دروس المهارات", skills_subtitle: "تقدم من المبتدئ إلى الاحتراف", filter_all: "الكل", filter_beginner: "مبتدئ", filter_intermediate: "متوسط", filter_advanced: "متقدم", store_title: "متجر المعدات", store_subtitle: "معدات احترافية لنتائج حقيقية", footer_desc: "أتقن وزن جسمك. ابنِ قوة حقيقية. انضم إلى الحركة.", footer_links: "روابط", footer_contact: "اتصل بنا", label_name: "الاسم الكامل", label_email: "البريد الإلكتروني", label_password: "كلمة المرور", level: "المستوى", add_cart: "أضف للسلة", difficulty: "الصعوبة", cart_title: "عربة التسوق", cart_empty: "عربة التسوق فارغة.", cart_total: "المجموع", btn_checkout: "إتمام الشراء"
+        brand:"كاليلاييف",nav_about:"عن الرياضة",nav_skills:"المهارات",nav_store:"المتجر",nav_testimonials:"آراء المتدربين",btn_login:"دخول",btn_signup:"تسجيل حساب",btn_logout:"خروج",btn_start:"ابدأ الرحلة",btn_learn:"اعرف المزيد",hero_tag:"أتقن وزن جسمك",hero_title_1:"أطلق العنان لـ",hero_title_2:"قوتك الحقيقية",hero_desc:"كاليستينكس هي فن استخدام وزن جسمك لبناء قوة لا تصدق ومرونة وتحكم. لا تحتاج إلى صالة ألعاب رياضية.",about_tag:"فن الحركة",about_title:"ما هي الكاليستينكس؟",about_text_1:"كاليستينكس هي شكل من أشكال تدريب القوة باستخدام وزن الجسم كمقاومة. الكلمة مشتقة من الكلمتين اليونانيتين 'kallos' (الجمال) و 'sthenos' (القوة).",about_text_2:"على عكس رفع الأثقال التقليدي، تركز كاليستينكس على الحركات المركبة التي تشرك مجموعات عضلية متعددة في وقت واحد.",stat_1:"معدات",stat_2:"وزن الجسم",stat_3:"رحلة",stat_4:"للبدء",stat_skills:"مهارات",stat_programs:"برامج",stat_k:"ألف+ مستخدم",skills_tag:"تدريب تقدمي",skills_title:"دروس المهارات",skills_subtitle:"تقدم من المبتدئ إلى الاحتراف",filter_all:"الكل",filter_beginner:"مبتدئ",filter_intermediate:"متوسط",filter_advanced:"متقدم",store_tag:"معدات احترافية",store_title:"متجر المعدات",store_subtitle:"معدات احترافية لنتائج حقيقية",testimonials_tag:"المجتمع",testimonials_title:"ماذا يقول الرياضيون",testimonial_1:"كاليلاييف غيرت تدريبي بالكامل. من صفر سحبات إلى موسكل أب في 6 أشهر. النهج التقدمي يصنع الفرق.",testimonial_2:"أفضل منصة كاليستينكس وجدتها. التحليلات مفصلة بشكل لا يصدق والمجتمع يحفزني كل يوم.",testimonial_3:"من البلانش إلى الرافعة الأمامية، تقدمات كاليلاييف مدعومة علمياً وفعالة. حققت مهارات لم أكن أعتقد أنها ممكنة.",testimonial_role_1:"رياضي شارع لياقة",testimonial_role_2:"مدرب لياقة",testimonial_role_3:"بطل كاليستينكس",cta_title:"مستعد للتحول؟",cta_desc:"انضم لآلاف الرياضيين الذين بدأوا رحلة الكاليستينكس مع كاليلاييف.",footer_desc:"أتقن وزن جسمك. ابنِ قوة حقيقية. انضم إلى الحركة.",footer_links:"روابط",footer_contact:"اتصل بنا",label_name:"الاسم الكامل",label_email:"البريد الإلكتروني",label_password:"كلمة المرور",level:"المستوى",add_cart:"أضف للسلة",difficulty:"الصعوبة",cart_title:"عربة التسوق",cart_empty:"عربة التسوق فارغة.",cart_total:"المجموع",btn_checkout:"إتمام الشراء",
+        static_skills: "المهارات الثابتة", dynamic_skills: "المهارات الحركية"
       }
     };
 
     const DB = {
       skills: [
-        { id: 1, name_en: "Push-Up", name_ar: "تمرين الضغط", level: "beginner", diff: 20, img: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=500&q=80" },
-        { id: 2, name_en: "Pull-Up", name_ar: "السحب", level: "beginner", diff: 40, img: "https://images.unsplash.com/photo-1526506114642-a6652c78f5f6?w=500&q=80" },
-        { id: 3, name_en: "Dip", name_ar: "الغمس", level: "beginner", diff: 35, img: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500&q=80" },
-        { id: 4, name_en: "Pistol Squat", name_ar: "القرفصاء المسدسية", level: "intermediate", diff: 60, img: "https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=500&q=80" },
-        { id: 5, name_en: "Muscle-Up", name_ar: "موسكل أب", level: "intermediate", diff: 75, img: "https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=500&q=80" },
-        { id: 6, name_en: "Front Lever", name_ar: "الرافعة الأمامية", level: "advanced", diff: 85, img: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&q=80" },
-        { id: 7, name_en: "Planche", name_ar: "البلانش", level: "advanced", diff: 95, img: "https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=500&q=80" }
+        // Static Skills
+        { id:1, category:"static", name_en:"Pushups", name_ar:"تمرين الضغط", level:"beginner", diff:20, img:"https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=500&q=80", desc_en:"The foundation of upper body strength", desc_ar:"أساس قوة الجزء العلوي" },
+        { id:2, category:"static", name_en:"Handstand", name_ar:"الوقوف على اليدين", level:"beginner", diff:45, img:"https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500&q=80", desc_en:"Master balance and shoulder stability", desc_ar:"أتقن التوازن وثبات الكتف" },
+        { id:3, category:"static", name_en:"Pullups", name_ar:"تمرين العقلة", level:"beginner", diff:40, img:"https://images.unsplash.com/photo-1526506114642-a6652c78f5f6?w=500&q=80", desc_en:"Master your back and biceps", desc_ar:"أتقن ظهرك وبايسيبس" },
+        { id:4, category:"static", name_en:"Back Lever", name_ar:"الرافعة الخلفية", level:"intermediate", diff:65, img:"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&q=80", desc_en:"Impressive horizontal hold", desc_ar:"ثبات أفقي مذهل" },
+        { id:5, category:"static", name_en:"Elbow Lever", name_ar:"الرافعة على الكوع", level:"intermediate", diff:55, img:"https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=500&q=80", desc_en:"Great for balance and core", desc_ar:"رائع للتوازن والقلب" },
+        { id:6, category:"static", name_en:"Front Lever", name_ar:"الرافعة الأمامية", level:"intermediate", diff:75, img:"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&q=80", desc_en:"Elite core and back control", desc_ar:"تحكم النخبة في القلب والظهر" },
+        { id:7, category:"static", name_en:"Muscleups", name_ar:"ماصل أب", level:"advanced", diff:85, img:"https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=500&q=80", desc_en:"The pinnacle of pulling power", desc_ar:"قمة قوة السحب" },
+        { id:8, category:"static", name_en:"Planche", name_ar:"البلانش", level:"advanced", diff:95, img:"https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=500&q=80", desc_en:"The pinnacle of pushing strength", desc_ar:"قمة قوة الدفع" },
+        { id:9, category:"static", name_en:"One Arm Handstand", name_ar:"الوقوف على يد واحدة", level:"advanced", diff:98, img:"https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500&q=80", desc_en:"Ultimate balance mastery", desc_ar:"إتقان التوازن النهائي" },
+        { id:10, category:"static", name_en:"Human Flag", name_ar:"الراية البشرية", level:"advanced", diff:98, img:"https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500&q=80", desc_en:"Ultimate balance mastery", desc_ar:"إتقان التوازن النهائي" },
+        // Dynamic Skills
+        { id:10, category:"dynamic", name_en:"Swing", name_ar:"الأرجوحة", level:"beginner", diff:15, img:"https://images.unsplash.com/photo-1517344654924-dc24513149ba?w=500&q=80", desc_en:"Basic bar momentum", desc_ar:"زخم البار الأساسي" },
+        { id:11, category:"dynamic", name_en:"Bar Gainer", name_ar:"بار جينر", level:"beginner", diff:35, img:"https://images.unsplash.com/photo-1517344654924-dc24513149ba?w=500&q=80", desc_en:"Simple backflip from bar", desc_ar:"شقلبة خلفية بسيطة من البار" },
+        { id:12, category:"dynamic", name_en:"180 Turn", name_ar:"دوران 180 درجة", level:"intermediate", diff:50, img:"https://images.unsplash.com/photo-1517344654924-dc24513149ba?w=500&q=80", desc_en:"Half turn on the bar", desc_ar:"نصف دورة على البار" },
+        { id:13, category:"dynamic", name_en:"360 Turn", name_ar:"دوران 360 درجة", level:"advanced", diff:80, img:"https://images.unsplash.com/photo-1517344654924-dc24513149ba?w=500&q=80", desc_en:"Full rotation on the bar", desc_ar:"دورة كاملة على البار" }
       ],
       products: [
-        { id: 1, name_en: "Pro Pull-Up Bar", name_ar: "بار احترافي", price: 49.99, img: "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=500&q=80" },
-        { id: 2, name_en: "Wooden Parallettes", name_ar: "بارليت خشبي", price: 59.99, img: "https://images.unsplash.com/photo-1620188526357-ff08e03ae266?w=500&q=80" },
-        { id: 3, name_en: "Gymnastics Rings", name_ar: "حلقات جمباز", price: 39.99, img: "https://images.unsplash.com/photo-1517344654924-dc24513149ba?w=500&q=80" },
-        { id: 4, name_en: "Liquid Chalk", name_ar: "طباشير سائل", price: 14.99, img: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500&q=80" }
+        { id:1, name_en:"Pro Pull-Up Bar", name_ar:"بار احترافي", price:49.99, img:"https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=500&q=80", rating:4.8, badge:"Best Seller" },
+        { id:2, name_en:"Wooden Parallettes", name_ar:"بارليت خشبي", price:59.99, img:"https://images.unsplash.com/photo-1620188526357-ff08e03ae266?w=500&q=80", rating:4.9, badge:"Premium" },
+        { id:3, name_en:"Gymnastics Rings", name_ar:"حلقات جمباز", price:39.99, img:"https://images.unsplash.com/photo-1517344654924-dc24513149ba?w=500&q=80", rating:4.7, badge:null },
+        { id:4, name_en:"Liquid Chalk", name_ar:"طباشير سائل", price:14.99, img:"https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500&q=80", rating:4.6, badge:"Essential" },
+        { id:5, name_en:"Resistance Bands Set", name_ar:"طقم أحبال المقاومة", price:29.99, img:"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&q=80", rating:4.9, badge:"New" },
+        { id:6, name_en:"Weight Vest (10kg)", name_ar:"سترة أوزان (10 كجم)", price:79.99, img:"https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=500&q=80", rating:4.8, badge:"Heavy Duty" },
+        { id:7, name_en:"Wrist Wraps", name_ar:"أربطة المعصم", price:12.99, img:"https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500&q=80", rating:4.7, badge:null }
       ]
     };
 
-    // --- Core Application Class ---
+    // ===== PARTICLE SYSTEM =====
+    class ParticleSystem {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.particles = [];
+        this.mouse = { x: 0, y: 0 };
+        this.resize();
+        this.init();
+        window.addEventListener('resize', () => this.resize());
+        window.addEventListener('mousemove', e => { this.mouse.x = e.clientX; this.mouse.y = e.clientY; });
+      }
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+      init() {
+        this.particles = [];
+        const count = Math.min(80, Math.floor(window.innerWidth / 15));
+        for (let i = 0; i < count; i++) {
+          this.particles.push({
+            x: Math.random() * this.canvas.width,
+            y: Math.random() * this.canvas.height,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: (Math.random() - 0.5) * 0.5,
+            r: Math.random() * 2 + 0.5,
+            o: Math.random() * 0.5 + 0.1
+          });
+        }
+      }
+      draw() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        const isDark = document.documentElement.classList.contains('dark');
+        
+        this.particles.forEach((p, i) => {
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < 0 || p.x > this.canvas.width) p.vx *= -1;
+          if (p.y < 0 || p.y > this.canvas.height) p.vy *= -1;
+
+          this.ctx.beginPath();
+          this.ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          this.ctx.fillStyle = isDark ? `rgba(255,87,34,${p.o})` : `rgba(255,87,34,${p.o * 0.6})`;
+          this.ctx.fill();
+
+          for (let j = i + 1; j < this.particles.length; j++) {
+            const p2 = this.particles[j];
+            const dx = p.x - p2.x, dy = p.y - p2.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < 120) {
+              this.ctx.beginPath();
+              this.ctx.moveTo(p.x, p.y);
+              this.ctx.lineTo(p2.x, p2.y);
+              this.ctx.strokeStyle = isDark ? `rgba(255,87,34,${0.06 * (1 - dist/120)})` : `rgba(255,87,34,${0.04 * (1 - dist/120)})`;
+              this.ctx.lineWidth = 0.5;
+              this.ctx.stroke();
+            }
+          }
+
+          const mdx = p.x - this.mouse.x, mdy = p.y - this.mouse.y;
+          const mdist = Math.sqrt(mdx*mdx + mdy*mdy);
+          if (mdist < 150) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(p.x, p.y);
+            this.ctx.lineTo(this.mouse.x, this.mouse.y);
+            this.ctx.strokeStyle = isDark ? `rgba(255,87,34,${0.15 * (1 - mdist/150)})` : `rgba(255,87,34,${0.1 * (1 - mdist/150)})`;
+            this.ctx.lineWidth = 0.8;
+            this.ctx.stroke();
+          }
+        });
+
+        requestAnimationFrame(() => this.draw());
+      }
+    }
+
+    // ===== MAIN APP =====
     class CalilifeApp {
       constructor() {
         this.lang = localStorage.getItem('calilife_lang') || 'en';
@@ -368,7 +773,6 @@
         this.user = JSON.parse(localStorage.getItem('calilife_user')) || null;
         this.cart = JSON.parse(localStorage.getItem('calilife_cart')) || [];
         this.authMode = 'login';
-        
         this.init();
       }
 
@@ -381,336 +785,67 @@
         this.renderSkills('all');
         this.renderProducts();
         this.initScrollAnimations();
+        this.initParticles();
+        this.initCursor();
+        this.initScrollProgress();
+        this.initCounters();
+        this.initTiltCards();
+        this.initMagneticBtns();
+        this.removePreloader();
+        this.setupNavbarScroll();
       }
 
-      // -- UI State Management --
-      toggleTheme() {
-        this.theme = this.theme === 'dark' ? 'light' : 'dark';
-        localStorage.setItem('calilife_theme', this.theme);
-        this.applyTheme();
+      removePreloader() {
+        setTimeout(() => document.getElementById('preloader').classList.add('done'), 800);
       }
 
-      applyTheme() {
-        const html = document.documentElement;
-        if (this.theme === 'dark') {
-          html.classList.add('dark');
-        } else {
-          html.classList.remove('dark');
-        }
+      initParticles() {
+        const canvas = document.getElementById('particleCanvas');
+        if (!canvas) return;
+        const ps = new ParticleSystem(canvas);
+        ps.draw();
       }
 
-      toggleLanguage() {
-        this.lang = this.lang === 'en' ? 'ar' : 'en';
-        localStorage.setItem('calilife_lang', this.lang);
-        this.applyLanguage();
-        this.renderSkills(document.querySelector('.filter-btn.active').dataset.filter);
-        this.renderProducts();
-        this.renderCart();
-      }
-
-      applyLanguage() {
-        const html = document.documentElement;
-        html.dir = this.lang === 'ar' ? 'rtl' : 'ltr';
-        html.lang = this.lang;
-        document.getElementById('langToggle').innerText = this.lang === 'en' ? 'ع' : 'EN';
-        
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-          const key = el.getAttribute('data-i18n');
-          if (Dictionary[this.lang][key]) {
-            el.innerHTML = Dictionary[this.lang][key];
-          }
+      initCursor() {
+        const dot = document.querySelector('.cursor-dot');
+        const ring = document.querySelector('.cursor-ring');
+        window.addEventListener('mousemove', e => {
+          dot.style.transform = `translate(${e.clientX - 4}px, ${e.clientY - 4}px)`;
+          ring.style.transform = `translate(${e.clientX - 20}px, ${e.clientY - 20}px)`;
         });
-        
-        // Also update the modal strings if open
-        this.updateModalUI();
-      }
-
-      // -- Cart System --
-      toggleCart() {
-        const html = document.documentElement;
-        const overlay = document.getElementById('cartOverlay');
-        
-        html.classList.toggle('cart-open');
-        if (html.classList.contains('cart-open')) {
-          overlay.classList.remove('hidden');
-        } else {
-          overlay.classList.add('hidden');
-        }
-      }
-
-      addToCart(id) {
-        const product = DB.products.find(p => p.id === id);
-        if (!product) return;
-        
-        const existing = this.cart.find(item => item.id === id);
-        if (existing) {
-          existing.quantity++;
-        } else {
-          this.cart.push({ ...product, quantity: 1 });
-        }
-        
-        this.saveCart();
-        this.renderCart();
-        
-        const productName = this.lang === 'en' ? product.name_en : product.name_ar;
-        this.toast(this.lang === 'en' ? `${productName} added to cart!` : `تمت إضافة ${productName} للسلة!`);
-      }
-
-      removeFromCart(id) {
-        this.cart = this.cart.filter(item => item.id !== id);
-        this.saveCart();
-        this.renderCart();
-      }
-
-      updateQuantity(id, change) {
-        const item = this.cart.find(i => i.id === id);
-        if (item) {
-          item.quantity += change;
-          if (item.quantity <= 0) {
-            this.removeFromCart(id);
-          } else {
-            this.saveCart();
-            this.renderCart();
-          }
-        }
-      }
-
-      saveCart() {
-        localStorage.setItem('calilife_cart', JSON.stringify(this.cart));
-      }
-
-      renderCart() {
-        const container = document.getElementById('cartItems');
-        const countBadge = document.getElementById('cartCount');
-        const totalDisplay = document.getElementById('cartTotal');
-        
-        let total = 0;
-        let count = 0;
-        
-        if (this.cart.length === 0) {
-          container.innerHTML = `<div class="text-center text-gray-500 mt-10 font-medium">${Dictionary[this.lang].cart_empty}</div>`;
-        } else {
-          container.innerHTML = this.cart.map(item => {
-            total += item.price * item.quantity;
-            count += item.quantity;
-            return `
-              <div class="flex items-center gap-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-                <img src="${item.img}" class="w-16 h-16 object-cover rounded-lg">
-                <div class="flex-1">
-                  <h4 class="font-bold text-sm text-gray-900 dark:text-white line-clamp-1">${item['name_' + this.lang]}</h4>
-                  <div class="text-primary font-bold text-sm">$${item.price}</div>
-                  <div class="flex items-center gap-3 mt-2">
-                    <button onclick="app.updateQuantity(${item.id}, -1)" class="w-6 h-6 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition text-gray-800 dark:text-white">-</button>
-                    <span class="text-sm font-bold text-gray-900 dark:text-white">${item.quantity}</span>
-                    <button onclick="app.updateQuantity(${item.id}, 1)" class="w-6 h-6 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition text-gray-800 dark:text-white">+</button>
-                  </div>
-                </div>
-                <button onclick="app.removeFromCart(${item.id})" class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
-              </div>
-            `;
-          }).join('');
-        }
-        
-        totalDisplay.innerText = `$${total.toFixed(2)}`;
-        
-        if (count > 0) {
-          countBadge.innerText = count;
-          countBadge.classList.remove('hidden');
-        } else {
-          countBadge.classList.add('hidden');
-        }
-      }
-
-      checkout() {
-        if (this.cart.length === 0) return;
-        if (!this.user) {
-          this.toggleCart();
-          this.openAuthModal('login');
-          this.toast(this.lang === 'en' ? 'Please login to checkout' : 'يرجى تسجيل الدخول لإتمام الشراء');
-          return;
-        }
-        
-        this.cart = [];
-        this.saveCart();
-        this.renderCart();
-        this.toggleCart();
-        this.toast(this.lang === 'en' ? 'Order placed successfully! 🎉' : 'تم تأكيد طلبك بنجاح! 🎉');
-      }
-
-      // -- Rendering Grids --
-      async renderSkills(filter) {
-        const grid = document.getElementById('skillsGrid');
-        grid.innerHTML = Array(3).fill('<div class="glass-card rounded-2xl h-80 skeleton"></div>').join(''); 
-
-        await new Promise(r => setTimeout(r, 400));
-
-        const filtered = filter === 'all' ? DB.skills : DB.skills.filter(s => s.level === filter);
-        const langDict = Dictionary[this.lang];
-
-        grid.innerHTML = filtered.map(skill => `
-          <div class="glass-card rounded-3xl overflow-hidden group fade-in-up visible">
-            <div class="h-56 overflow-hidden relative">
-              <img src="${skill.img}" alt="${skill['name_' + this.lang]}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-              <div class="absolute top-4 right-4 bg-black/70 backdrop-blur px-3 py-1 text-xs font-bold rounded-full text-white uppercase tracking-wider border border-white/10">
-                ${langDict['filter_' + skill.level]}
-              </div>
-            </div>
-            <div class="p-6">
-              <h3 class="text-2xl font-bold mb-4 font-display tracking-wide">${skill['name_' + this.lang]}</h3>
-              <div class="space-y-2">
-                <div class="flex justify-between text-xs font-bold text-gray-500 uppercase">
-                  <span>${langDict.difficulty}</span>
-                  <span>${skill.diff}%</span>
-                </div>
-                <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
-                  <div class="bg-primary h-2 rounded-full" style="width: ${skill.diff}%"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      async renderProducts() {
-        const grid = document.getElementById('productsGrid');
-        grid.innerHTML = Array(4).fill('<div class="glass-card rounded-2xl h-72 skeleton"></div>').join('');
-        
-        await new Promise(r => setTimeout(r, 400));
-
-        grid.innerHTML = DB.products.map(p => `
-          <div class="glass-card rounded-3xl overflow-hidden group p-4 fade-in-up visible flex flex-col">
-            <div class="h-48 overflow-hidden rounded-2xl mb-4 relative">
-              <img src="${p.img}" alt="${p['name_' + this.lang]}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-            </div>
-            <h3 class="text-xl font-bold mb-1">${p['name_' + this.lang]}</h3>
-            <p class="text-primary font-bold text-lg mb-4">$${p.price}</p>
-            <button onclick="app.addToCart(${p.id})" class="mt-auto w-full py-3 rounded-xl border-2 border-primary text-primary font-bold hover:bg-primary hover:text-white transition group-hover:shadow-lg shadow-primary/30">
-              ${Dictionary[this.lang].add_cart}
-            </button>
-          </div>
-        `).join('');
-      }
-
-      // -- Modals & Auth --
-      openAuthModal(mode) {
-        this.authMode = mode;
-        const modal = document.getElementById('authModal');
-        const content = document.getElementById('authModalContent');
-        
-        modal.classList.remove('hidden');
-        void modal.offsetWidth; 
-        content.classList.remove('scale-95', 'opacity-0');
-        content.classList.add('scale-100', 'opacity-100');
-
-        this.updateModalUI();
-      }
-
-      closeAuthModal() {
-        const content = document.getElementById('authModalContent');
-        content.classList.remove('scale-100', 'opacity-100');
-        content.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => document.getElementById('authModal').classList.add('hidden'), 300);
-      }
-
-      switchAuthMode() {
-        this.authMode = this.authMode === 'login' ? 'signup' : 'login';
-        this.updateModalUI();
-      }
-
-      updateModalUI() {
-        const dict = Dictionary[this.lang];
-        const isLogin = this.authMode === 'login';
-        
-        document.getElementById('modalTitle').innerText = isLogin ? (this.lang === 'en' ? 'LOGIN' : 'تسجيل الدخول') : (this.lang === 'en' ? 'SIGN UP' : 'حساب جديد');
-        document.getElementById('nameField').style.display = isLogin ? 'none' : 'block';
-        document.getElementById('inputName').required = !isLogin;
-        
-        document.getElementById('btnAuthText').innerText = isLogin ? dict.btn_login : dict.btn_signup;
-        document.getElementById('modalSwitchText').innerText = isLogin ? (this.lang === 'en' ? "Don't have an account?" : "ليس لديك حساب؟") : (this.lang === 'en' ? "Already have an account?" : "لديك حساب بالفعل؟");
-        document.getElementById('modalSwitchBtn').innerText = isLogin ? dict.btn_signup : dict.btn_login;
-      }
-
-      handleAuth(e) {
-        e.preventDefault();
-        const email = document.getElementById('inputEmail').value;
-        const name = document.getElementById('inputName').value;
-
-        // Mock auth login
-        this.user = { name: this.authMode === 'login' ? email.split('@')[0] : name, email };
-        localStorage.setItem('calilife_user', JSON.stringify(this.user));
-        
-        this.toast(this.lang === 'en' ? `Welcome, ${this.user.name}!` : `أهلاً بك، ${this.user.name}!`);
-        this.updateAuthUI();
-        this.closeAuthModal();
-      }
-
-      logout() {
-        this.user = null;
-        localStorage.removeItem('calilife_user');
-        this.updateAuthUI();
-        this.toast(this.lang === 'en' ? 'Logged out successfully' : 'تم تسجيل الخروج بنجاح');
-      }
-
-      updateAuthUI() {
-        const authArea = document.getElementById('authArea');
-        const userArea = document.getElementById('userArea');
-        
-        if (this.user) {
-          // Hide login/signup entirely
-          authArea.className = 'hidden';
-          // Show user profile area on desktop
-          userArea.className = 'hidden md:flex items-center gap-3';
-          document.getElementById('userNameDisplay').innerText = this.user.name;
-        } else {
-          // Show login/signup on desktop
-          authArea.className = 'hidden md:flex items-center gap-3';
-          // Hide user profile area entirely
-          userArea.className = 'hidden';
-        }
-
-        // Mobile Menu Area Update
-        document.getElementById('mobileAuthArea').innerHTML = this.user 
-          ? `<span class="block py-2 font-bold text-primary">${this.user.name}</span><button onclick="app.logout()" class="block py-2 text-left text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-500/10 transition rounded px-2">${Dictionary[this.lang].btn_logout}</button>`
-          : `<button onclick="app.openAuthModal('login'); document.getElementById('mobileMenu').classList.add('hidden');" class="block py-2 text-center font-bold border border-gray-200 dark:border-gray-700 rounded-lg px-4 mb-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition">${Dictionary[this.lang].btn_login}</button><button onclick="app.openAuthModal('signup'); document.getElementById('mobileMenu').classList.add('hidden');" class="block py-2 text-center font-bold bg-primary text-white rounded-lg px-4 shadow-lg shadow-primary/30 hover:bg-primaryHover transition">${Dictionary[this.lang].btn_signup}</button>`;
-      }
-
-      toast(msg) {
-        const container = document.getElementById('toastContainer');
-        const el = document.createElement('div');
-        el.className = 'toast';
-        el.innerHTML = `<span class="font-bold">${msg}</span>`;
-        container.appendChild(el);
-        setTimeout(() => el.classList.add('show'), 10);
-        setTimeout(() => {
-          el.classList.remove('show');
-          setTimeout(() => el.remove(), 400);
-        }, 3000);
-      }
-
-      // -- Events & Animations --
-      setupEventListeners() {
-        document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
-        document.getElementById('langToggle').addEventListener('click', () => this.toggleLanguage());
-        document.getElementById('authForm').addEventListener('submit', (e) => this.handleAuth(e));
-        
-        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
-          const menu = document.getElementById('mobileMenu');
-          menu.classList.toggle('hidden');
+        document.querySelectorAll('a, button, .tilt-card').forEach(el => {
+          el.addEventListener('mouseenter', () => ring.classList.add('hover'));
+          el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
         });
+      }
 
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.filter-btn').forEach(b => {
-              b.classList.remove('bg-primary', 'text-white', 'shadow-lg');
-              b.classList.add('bg-gray-200', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-300');
-            });
-            e.target.classList.remove('bg-gray-200', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-300');
-            e.target.classList.add('bg-primary', 'text-white', 'shadow-lg');
-            this.renderSkills(e.target.dataset.filter);
+      initScrollProgress() {
+        window.addEventListener('scroll', () => {
+          const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+          const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+          const scrolled = (winScroll / height) * 100;
+          document.getElementById('scrollProgress').style.width = scrolled + "%";
+        });
+      }
+
+      initCounters() {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const el = entry.target;
+              const target = parseInt(el.dataset.count);
+              let curr = 0;
+              const step = target / 50;
+              const interval = setInterval(() => {
+                curr += step;
+                if (curr >= target) { el.innerText = target; clearInterval(interval); }
+                else el.innerText = Math.floor(curr);
+              }, 30);
+              observer.unobserve(el);
+            }
           });
-        });
+        }, { threshold: 0.5 });
+        document.querySelectorAll('.count-up').forEach(el => observer.observe(el));
       }
 
       initScrollAnimations() {
@@ -718,16 +853,316 @@
           entries.forEach(entry => {
             if (entry.isIntersecting) {
               entry.target.classList.add('visible');
-              observer.unobserve(entry.target);
             }
           });
         }, { threshold: 0.1 });
+        document.querySelectorAll('.fade-in-up, .scale-in, .text-reveal').forEach(el => observer.observe(el));
+      }
 
-        document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+      initTiltCards() {
+        document.querySelectorAll('.tilt-card').forEach(card => {
+          card.addEventListener('mousemove', e => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const xc = rect.width / 2;
+            const yc = rect.height / 2;
+            const dx = x - xc;
+            const dy = y - yc;
+            card.style.transform = `rotateY(${dx / 20}deg) rotateX(${-dy / 20}deg)`;
+          });
+          card.addEventListener('mouseleave', () => {
+            card.style.transform = 'rotateY(0) rotateX(0)';
+          });
+        });
+      }
+
+      initMagneticBtns() {
+        document.querySelectorAll('.magnetic-btn').forEach(btn => {
+          btn.addEventListener('mousemove', e => {
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+          });
+          btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'translate(0, 0)';
+          });
+          btn.addEventListener('click', e => {
+            const rect = btn.getBoundingClientRect();
+            const ripple = document.createElement('span');
+            ripple.className = 'btn-ripple';
+            ripple.style.left = e.clientX - rect.left + 'px';
+            ripple.style.top = e.clientY - rect.top + 'px';
+            ripple.style.width = ripple.style.height = Math.max(rect.width, rect.height) + 'px';
+            btn.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+          });
+        });
+      }
+
+      setupNavbarScroll() {
+        const nav = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+          if (window.scrollY > 80) {
+            nav.classList.add('backdrop-blur-2xl', 'bg-white/80', 'dark:bg-[#030303]/80', 'border-b', 'border-gray-200/50', 'dark:border-white/5', 'shadow-lg', 'shadow-black/5');
+          } else {
+            nav.classList.remove('backdrop-blur-2xl', 'bg-white/80', 'dark:bg-[#030303]/80', 'border-b', 'border-gray-200/50', 'dark:border-white/5', 'shadow-lg', 'shadow-black/5');
+          }
+        });
+      }
+
+      toggleTheme() {
+        this.theme = this.theme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('calilife_theme', this.theme);
+        this.applyTheme();
+      }
+      applyTheme() {
+        document.documentElement.classList.toggle('dark', this.theme === 'dark');
+      }
+
+      toggleLanguage() {
+        this.lang = this.lang === 'en' ? 'ar' : 'en';
+        localStorage.setItem('calilife_lang', this.lang);
+        this.applyLanguage();
+        this.renderSkills(document.querySelector('.filter-btn.active')?.dataset.filter || 'all');
+        this.renderProducts();
+        this.renderCart();
+      }
+      applyLanguage() {
+        const html = document.documentElement;
+        html.dir = this.lang === 'ar' ? 'rtl' : 'ltr';
+        html.lang = this.lang;
+        document.getElementById('langToggle').innerText = this.lang === 'en' ? 'ع' : 'EN';
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = el.getAttribute('data-i18n');
+          if (Dictionary[this.lang][key]) el.innerHTML = Dictionary[this.lang][key];
+        });
+      }
+
+      toggleCart() {
+        const html = document.documentElement;
+        const overlay = document.getElementById('cartOverlay');
+        html.classList.toggle('cart-open');
+        overlay.classList.toggle('hidden', !html.classList.contains('cart-open'));
+      }
+      addToCart(id) {
+        const product = DB.products.find(p => p.id === id);
+        if (!product) return;
+        const existing = this.cart.find(item => item.id === id);
+        if (existing) existing.quantity++;
+        else this.cart.push({ ...product, quantity: 1 });
+        this.saveCart(); this.renderCart();
+        const name = this.lang === 'en' ? product.name_en : product.name_ar;
+        this.toast(this.lang === 'en' ? `${name} added to cart!` : `تمت إضافة ${name} للسلة!`);
+      }
+      removeFromCart(id) {
+        this.cart = this.cart.filter(item => item.id !== id);
+        this.saveCart(); this.renderCart();
+      }
+      updateQuantity(id, change) {
+        const item = this.cart.find(i => i.id === id);
+        if (item) {
+          item.quantity += change;
+          if (item.quantity <= 0) this.removeFromCart(id);
+          else { this.saveCart(); this.renderCart(); }
+        }
+      }
+      saveCart() { localStorage.setItem('calilife_cart', JSON.stringify(this.cart)); }
+      renderCart() {
+        const container = document.getElementById('cartItems');
+        const countBadge = document.getElementById('cartCount');
+        const totalDisplay = document.getElementById('cartTotal');
+        let total = 0, count = 0;
+        if (this.cart.length === 0) {
+          container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-500 mt-10"><svg class="w-16 h-16 mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg><span class="font-semibold">${Dictionary[this.lang].cart_empty}</span></div>`;
+        } else {
+          container.innerHTML = this.cart.map(item => {
+            total += item.price * item.quantity; count += item.quantity;
+            return `<div class="flex items-center gap-4 bg-gray-50 dark:bg-white/[0.03] p-4 rounded-2xl border border-gray-100 dark:border-white/5 transition hover:border-primary/20"><img src="${item.img}" class="w-20 h-20 object-cover rounded-xl"><div class="flex-1 min-w-0"><h4 class="font-bold text-sm text-gray-900 dark:text-white truncate">${item['name_'+this.lang]}</h4><div class="text-primary font-bold text-sm mt-0.5">$${item.price.toFixed(2)}</div><div class="flex items-center gap-3 mt-2"><button onclick="app.updateQuantity(${item.id},-1)" class="w-7 h-7 flex items-center justify-center bg-gray-200 dark:bg-white/10 rounded-lg hover:bg-gray-300 dark:hover:bg-white/20 transition text-gray-800 dark:text-white text-sm font-bold">−</button><span class="text-sm font-bold text-gray-900 dark:text-white w-4 text-center">${item.quantity}</span><button onclick="app.updateQuantity(${item.id},1)" class="w-7 h-7 flex items-center justify-center bg-gray-200 dark:bg-white/10 rounded-lg hover:bg-gray-300 dark:hover:bg-white/20 transition text-gray-800 dark:text-white text-sm font-bold">+</button></div></div><button onclick="app.removeFromCart(${item.id})" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div>`;
+          }).join('');
+        }
+        totalDisplay.innerText = `$${total.toFixed(2)}`;
+        if (count > 0) { countBadge.innerText = count; countBadge.classList.remove('hidden'); }
+        else countBadge.classList.add('hidden');
+      }
+      checkout() {
+        if (this.cart.length === 0) return;
+        if (!this.user) {
+          this.toggleCart(); this.openAuthModal('login');
+          this.toast(this.lang === 'en' ? 'Please login to checkout' : 'يرجى تسجيل الدخول لإتمام الشراء');
+          return;
+        }
+        this.cart = []; this.saveCart(); this.renderCart(); this.toggleCart();
+        this.toast(this.lang === 'en' ? 'Order placed successfully! 🎉' : 'تم تأكيد طلبك بنجاح! 🎉');
+      }
+
+      async renderSkills(filter) {
+        const grid = document.getElementById('skillsGrid');
+        grid.innerHTML = Array(3).fill('<div class="glass-card rounded-3xl h-96 skeleton"></div>').join('');
+        await new Promise(r => setTimeout(r, 500));
+        grid.innerHTML = '';
+        
+        const categories = ['static', 'dynamic'];
+        const dict = Dictionary[this.lang];
+        const levelColors = { beginner: 'from-emerald-500 to-emerald-400', intermediate: 'from-amber-500 to-amber-400', advanced: 'from-red-500 to-red-400' };
+
+        categories.forEach(cat => {
+          const filtered = DB.skills.filter(s => s.category === cat && (filter === 'all' || s.level === filter));
+          if (filtered.length === 0) return;
+
+          const sectionTitle = document.createElement('div');
+          sectionTitle.className = 'col-span-full mt-12 mb-8 fade-in-up';
+          sectionTitle.innerHTML = `<h3 class="text-3xl font-display text-primary border-l-4 border-primary pl-4">${dict[cat + '_skills']}</h3>`;
+          grid.appendChild(sectionTitle);
+
+          filtered.forEach((skill, i) => {
+            const card = document.createElement('div');
+            card.className = `glass-card border-glow rounded-3xl overflow-hidden group fade-in-up stagger-${i % 3 + 1}`;
+            card.innerHTML = `
+              <div class="h-60 overflow-hidden relative">
+                <img src="${skill.img}" alt="${skill['name_'+this.lang]}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                <div class="absolute top-4 right-4 bg-gradient-to-r ${levelColors[skill.level]} px-3 py-1 text-[10px] font-bold rounded-full text-white uppercase tracking-widest shadow-lg">
+                  ${dict['filter_'+skill.level]}
+                </div>
+                <div class="absolute bottom-4 left-4 right-4">
+                  <h3 class="text-2xl font-bold font-display tracking-wide text-white drop-shadow-lg">${skill['name_'+this.lang]}</h3>
+                </div>
+              </div>
+              <div class="p-6">
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">${skill['desc_'+this.lang]}</p>
+                <div class="space-y-2">
+                  <div class="flex justify-between text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <span>${dict.difficulty}</span>
+                    <span class="text-primary">${skill.diff}%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 dark:bg-white/5 rounded-full h-2 overflow-hidden">
+                    <div class="progress-fill bg-gradient-to-r from-primary to-primaryLight h-2 rounded-full" style="width:${skill.diff}%"></div>
+                  </div>
+                </div>
+              </div>
+            `;
+            grid.appendChild(card);
+          });
+        });
+
+        setTimeout(() => {
+          grid.querySelectorAll('.fade-in-up').forEach(el => el.classList.add('visible'));
+        }, 50);
+        this.initMagneticBtns();
+        this.initTiltCards();
+      }
+
+      async renderProducts() {
+        const grid = document.getElementById('productsGrid');
+        grid.innerHTML = Array(4).fill('<div class="glass-card rounded-3xl h-80 skeleton"></div>').join('');
+        await new Promise(r => setTimeout(r, 500));
+
+        grid.innerHTML = DB.products.map((p, i) => `
+          <div class="glass-card border-glow rounded-3xl overflow-hidden group p-5 fade-in-up stagger-${i % 4 + 1} flex flex-col">
+            <div class="h-52 overflow-hidden rounded-2xl mb-5 relative">
+              <img src="${p.img}" alt="${p['name_'+this.lang]}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              ${p.badge ? `<div class="absolute top-3 left-3 product-badge">${p.badge}</div>` : ''}
+            </div>
+            <h3 class="text-lg font-bold mb-1 text-gray-900 dark:text-white">${p['name_'+this.lang]}</h3>
+            <div class="flex items-center justify-between mt-auto">
+              <span class="text-primary font-bold text-2xl font-display">$${p.price}</span>
+              <button onclick="app.addToCart(${p.id})" class="magnetic-btn w-11 h-11 rounded-xl bg-primary/10 hover:bg-gradient-to-r hover:from-primary hover:to-primaryLight text-primary hover:text-white transition-all flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+        setTimeout(() => {
+          grid.querySelectorAll('.fade-in-up').forEach(el => el.classList.add('visible'));
+        }, 50);
+        this.initMagneticBtns();
+      }
+
+      toast(msg) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<span>${msg}</span><button onclick="this.parentElement.remove()" class="ml-4 opacity-50 hover:opacity-100">&times;</button>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 4000);
+      }
+
+      openAuthModal(mode) {
+        this.authMode = mode;
+        const modal = document.getElementById('authModal');
+        modal.classList.remove('hidden');
+        this.updateAuthModalUI();
+      }
+      closeAuthModal() {
+        document.getElementById('authModal').classList.add('hidden');
+      }
+      switchAuthMode() {
+        this.authMode = this.authMode === 'login' ? 'signup' : 'login';
+        this.updateAuthModalUI();
+      }
+      updateAuthModalUI() {
+        const isLogin = this.authMode === 'login';
+        document.getElementById('authTitle').innerText = isLogin ? Dictionary[this.lang].btn_login : Dictionary[this.lang].btn_signup;
+        document.getElementById('authSubtitle').innerText = isLogin ? 'Welcome back, athlete!' : 'Start your journey today!';
+        document.getElementById('nameField').classList.toggle('hidden', isLogin);
+        document.getElementById('btnAuthText').innerText = isLogin ? Dictionary[this.lang].btn_login : Dictionary[this.lang].btn_signup;
+        document.getElementById('modalSwitchText').innerText = isLogin ? "Don't have an account?" : "Already have an account?";
+        document.getElementById('modalSwitchBtn').innerText = isLogin ? Dictionary[this.lang].btn_signup : Dictionary[this.lang].btn_login;
+      }
+      handleAuth(e) {
+        e.preventDefault();
+        const email = document.getElementById('inputEmail').value;
+        const name = document.getElementById('inputName').value || email.split('@')[0];
+        this.user = { name, email };
+        localStorage.setItem('calilife_user', JSON.stringify(this.user));
+        this.updateAuthUI();
+        this.closeAuthModal();
+        this.toast(this.lang === 'en' ? `Welcome, ${name}!` : `مرحباً، ${name}!`);
+      }
+      logout() {
+        this.user = null;
+        localStorage.removeItem('calilife_user');
+        this.updateAuthUI();
+        this.toast(this.lang === 'en' ? 'Logged out successfully' : 'تم تسجيل الخروج بنجاح');
+      }
+      updateAuthUI() {
+        const container = document.getElementById('authContainer');
+        if (this.user) {
+          container.innerHTML = `
+            <div class="flex items-center gap-4">
+              <div class="hidden sm:block text-right">
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-widest">Athlete</div>
+                <div class="text-sm font-bold">${this.user.name}</div>
+              </div>
+              <button onclick="app.logout()" class="px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500 hover:text-white transition-all text-sm font-bold uppercase tracking-widest" data-i18n="btn_logout">Logout</button>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <button onclick="app.openAuthModal('login')" class="px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-primary hover:text-white transition-all text-sm font-bold uppercase tracking-widest" data-i18n="btn_login">Login</button>
+          `;
+        }
+      }
+
+      setupEventListeners() {
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active', 'bg-gradient-to-r', 'from-primary', 'to-primaryLight', 'text-white', 'shadow-lg', 'shadow-primary/30'));
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.add('bg-gray-100', 'dark:bg-white/5', 'text-gray-700', 'dark:text-gray-300'));
+            
+            btn.classList.add('active', 'bg-gradient-to-r', 'from-primary', 'to-primaryLight', 'text-white', 'shadow-lg', 'shadow-primary/30');
+            btn.classList.remove('bg-gray-100', 'dark:bg-white/5', 'text-gray-700', 'dark:text-gray-300');
+            this.renderSkills(btn.dataset.filter);
+          });
+        });
       }
     }
 
-    // Initialize App
     const app = new CalilifeApp();
   </script>
 </body>
